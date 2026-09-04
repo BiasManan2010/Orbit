@@ -250,7 +250,7 @@ This is planned for v3 — switchable per-PC profiles from a single mobile app.
 ## Star History
 
 <a href="https://star-history.com/#BiasManan2010/orbit&Date">
-  <img src="   https://api.star-history.com/svg?repos=BiasManan2010/orbit&type=Date&cachebust=1" alt="Star History Chart" width="80%"/>
+  <img src="https://api.star-history.com/svg?repos=BiasManan2010/orbit&type=Date&cachebust=1" alt="Star History Chart" width="80%"/>
 </a>
 
 <br/>
