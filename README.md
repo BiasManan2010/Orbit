@@ -17,7 +17,7 @@
 
 <p align="center">
   <!-- 🖼️ BOILERPLATE: Orbit logo — replace with design/orbit-logo.svg -->
-  <img src="design/orbit-logo.svg" width="220" title="Orbit logo">
+  <img src="design/orbit-logo.png" width="220" title="Orbit logo">
 </p>
 
 <h3 align="center">Continuity for every device — not just Apple's</h3>
