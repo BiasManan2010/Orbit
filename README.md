@@ -144,21 +144,133 @@ A live demo will be linked here once Orbit reaches a public beta. In the meantim
 <br/>
 
 ## Architecture
-
-<!-- 🖼️ BOILERPLATE: Architecture diagram -->
-<p align="center">
-  <img src="design/orbit-architecture.png" width="80%" title="Orbit architecture">
-</p>
-
+ 
+```mermaid
+flowchart TB
+    subgraph ClientLayer["📱 CLIENT LAYER — Orbit Mobile (React Native + TypeScript)"]
+        direction LR
+        iOS["iOS App"]
+        Android["Android App"]
+        UI["Shared UI Layer<br/>Dashboard · Launcher · Files · Remote"]
+        iOS --- UI
+        Android --- UI
+    end
+ 
+    subgraph SecurityLayer["🔐 SECURITY & PAIRING LAYER"]
+        direction LR
+        QR["QR Code Pairing"]
+        Token["Short-lived Auth Token"]
+        Bio["Biometric Confirmation<br/>(sensitive actions)"]
+        Perm["Per-Device Permission Scope"]
+        QR --> Token
+    end
+ 
+    subgraph TransportLayer["🔗 TRANSPORT & DISCOVERY LAYER"]
+        direction LR
+        MDNS["mDNS / Bonjour<br/>Local Auto-Discovery"]
+        WS["WebSocket<br/>Encrypted Command Channel"]
+        Push["APNs / FCM<br/>Background Wake Push"]
+    end
+ 
+    subgraph ServiceCore["🖥️ ORBIT DESKTOP SERVICE (Node.js + TypeScript)"]
+        direction TB
+        Router["Command Router<br/>message dispatch"]
+        subgraph Modules["Feature Modules"]
+            direction LR
+            Clip["Clipboard Sync<br/>+ History"]
+            FileM["File Transfer<br/>chunked, resumable"]
+            Launch["App Launcher<br/>+ Scenes"]
+            Input["Input Simulation<br/>mouse/keyboard"]
+            Power["Power & Session<br/>shutdown/sleep/lock"]
+            Sound["Audio Control<br/>volume/mixer/output"]
+            Display["Display Control<br/>brightness/mode"]
+            Auto["Automation Engine<br/>triggers/scenes"]
+        end
+        Router --> Clip
+        Router --> FileM
+        Router --> Launch
+        Router --> Input
+        Router --> Power
+        Router --> Sound
+        Router --> Display
+        Router --> Auto
+        Log["Activity Log +<br/>Panic Lock Handler"]
+        Router -.-> Log
+    end
+ 
+    subgraph OSLayer["⚙️ OS INTEGRATION LAYER"]
+        direction LR
+        WinAPI["Windows APIs<br/>nut-js / native hooks"]
+        LinuxAPI["Linux APIs<br/>X11 / Wayland / uinput"]
+    end
+ 
+    subgraph TargetOS["Target Machines"]
+        direction LR
+        Win["Windows PC"]
+        Linux["Linux PC"]
+    end
+ 
+    %% Client to Security
+    UI --> QR
+    Bio --> UI
+    Perm --> Router
+ 
+    %% Client to Transport
+    UI -->|discover peer| MDNS
+    UI <-->|commands & events| WS
+    Push -.->|wake dormant app| UI
+ 
+    %% Security to Transport
+    Token -->|authorize| WS
+ 
+    %% Transport to Service Core
+    MDNS --> Router
+    WS <--> Router
+ 
+    %% Service Core to OS Layer
+    Input --> WinAPI
+    Input --> LinuxAPI
+    Power --> WinAPI
+    Power --> LinuxAPI
+    Sound --> WinAPI
+    Sound --> LinuxAPI
+    Display --> WinAPI
+    Display --> LinuxAPI
+    Launch --> WinAPI
+    Launch --> LinuxAPI
+    FileM --> WinAPI
+    FileM --> LinuxAPI
+    Clip --> WinAPI
+    Clip --> LinuxAPI
+ 
+    %% OS Layer to Machines
+    WinAPI --> Win
+    LinuxAPI --> Linux
+ 
+    classDef clientStyle fill:#1a1a2e,stroke:#A78BFA,stroke-width:2px,color:#fff
+    classDef securityStyle fill:#241a2e,stroke:#EC4899,stroke-width:2px,color:#fff
+    classDef transportStyle fill:#0d1a2e,stroke:#06B6D4,stroke-width:2px,color:#fff
+    classDef coreStyle fill:#1a1a2e,stroke:#A78BFA,stroke-width:2px,color:#fff
+    classDef moduleStyle fill:#14141f,stroke:#6366F1,stroke-width:1px,color:#fff
+    classDef osStyle fill:#0d0d1a,stroke:#F59E0B,stroke-width:2px,color:#fff
+    classDef targetStyle fill:#14141f,stroke:#888,stroke-width:1px,color:#fff
+ 
+    class ClientLayer,iOS,Android,UI clientStyle
+    class SecurityLayer,QR,Token,Bio,Perm securityStyle
+    class TransportLayer,MDNS,WS,Push transportStyle
+    class ServiceCore,Router,Log coreStyle
+    class Modules,Clip,FileM,Launch,Input,Power,Sound,Display,Auto moduleStyle
+    class OSLayer,WinAPI,LinuxAPI osStyle
+    class TargetOS,Win,Linux targetStyle
+```
+ 
 Orbit is made up of two components talking over one encrypted, low-latency channel:
-
+ 
 - **Orbit Mobile** — React Native app (iOS/Android). Sends commands, receives clipboard/file events.
 - **Orbit Desktop** — Node.js background service (Windows/Linux). Simulates input, handles file transfer, executes commands.
-
 Discovery is handled via mDNS/Bonjour on the local network, with QR-code pairing for first connection and a push-notification channel (APNs/FCM) to wake the mobile connection for background events.
-
+ 
 <br/>
-
 ## Security & Privacy
 
 - **Local-first by design** — v1 operates entirely over your local network. No file, clipboard, or command data is routed through a third-party cloud server.
