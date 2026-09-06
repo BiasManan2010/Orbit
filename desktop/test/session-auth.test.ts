@@ -1,0 +1,55 @@
+/** Tests durable-store boundaries and short-lived sessions; depends on temporary files; never writes production credentials. */
+import assert from 'node:assert/strict';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { test } from 'node:test';
+import { ActivityLog } from '../src/activity-log/activity-log.js';
+import { readConfig } from '../src/config.js';
+import { FilePairedCredentialStore } from '../src/security-pairing/paired-credential-store.js';
+import { credentialHash, SessionAuth } from '../src/security-pairing/session-auth.js';
+import { core } from './helpers.js';
+
+test('session tokens are distinct from credentials and expire or revoke immediately', () => {
+  let now = Date.now();
+  const fixture = core({ ttlMs: 100, now: () => now });
+  assert.equal(fixture.auth.issue('bad'), undefined);
+  const first = fixture.auth.issue(fixture.credential)!;
+  const second = fixture.auth.issue(fixture.credential)!;
+  assert.notEqual(first.sessionToken, fixture.credential);
+  assert.notEqual(first.sessionToken, second.sessionToken);
+  assert.equal(fixture.auth.authenticate(fixture.credential), undefined);
+  now += 100;
+  assert.equal(fixture.auth.authenticate(first.sessionToken), undefined);
+  const third = fixture.auth.issue(fixture.credential)!;
+  fixture.revoke();
+  assert.equal(fixture.auth.authenticate(third.sessionToken), undefined);
+  assert.equal(fixture.auth.issue(fixture.credential), undefined);
+  assert.ok(fixture.log.snapshot().every(event => !JSON.stringify(event).includes(fixture.credential)));
+});
+
+test('durable credential hashes survive service reconstruction, session tokens do not', t => {
+  const directory = mkdtempSync(join(tmpdir(), 'orbit-credentials-test-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const path = join(directory, 'paired.json');
+  const credential = randomBytes(32).toString('base64url');
+  const deviceId = randomUUID();
+  writeFileSync(path, JSON.stringify([{ deviceId, credentialHash: credentialHash(credential) }]));
+  const first = new SessionAuth(new FilePairedCredentialStore(path), new ActivityLog());
+  const old = first.issue(credential)!;
+  const second = new SessionAuth(new FilePairedCredentialStore(path), new ActivityLog());
+  assert.equal(second.authenticate(old.sessionToken), undefined);
+  assert.equal(second.issue(credential)!.session.deviceId, deviceId);
+  assert.equal(new SessionAuth(new FilePairedCredentialStore(), new ActivityLog()).issue(credential), undefined);
+  writeFileSync(path, '[{"deviceId":"unvalidated", "credentialHash":"bad"}]');
+  assert.throws(() => new FilePairedCredentialStore(path));
+});
+
+test('configuration requires TLS and rejects wildcard/public bind addresses', () => {
+  assert.throws(() => readConfig({}));
+  for (const host of ['0.0.0.0', '::', '8.8.8.8', 'example.com']) {
+    assert.throws(() => readConfig({ ORBIT_HOST: host, ORBIT_TLS_CERT: 'cert', ORBIT_TLS_KEY: 'key' }));
+  }
+  assert.equal(readConfig({ ORBIT_TLS_CERT: 'cert', ORBIT_TLS_KEY: 'key' }).host, '127.0.0.1');
+});

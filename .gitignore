@@ -1,0 +1,7 @@
+node_modules/
+desktop/dist/
+desktop/.local/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
