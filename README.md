@@ -3,7 +3,6 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-3F51B5.svg?style=for-the-badge&label=License&logoColor=000000&labelColor=ececec" alt="License: Apache 2.0"></a>
   <a href="https://github.com/mananbharti/orbit/stargazers"><img src="https://img.shields.io/github/stars/mananbharti/orbit?style=for-the-badge&color=A78BFA&labelColor=ececec" alt="Stars"></a>
   <a href="https://github.com/mananbharti/orbit/issues"><img src="https://img.shields.io/github/issues/mananbharti/orbit?style=for-the-badge&color=EC4899&labelColor=ececec" alt="Issues"></a>
-  <a href="https://buymeachai.in/mananbharti"><img src="https://img.shields.io/badge/Support-Buy%20Me%20A%20Chai-FFDD00?style=for-the-badge&logoColor=000000&labelColor=ececec" alt="Buy Me A Chai"></a>
   <a href="#"><img src="https://img.shields.io/badge/Discord-Coming%20Soon-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=ececec" alt="Discord"></a>
   <br/>
   <br/>
@@ -380,7 +379,7 @@ Orbit is early-stage. Issues, feature ideas, and pull requests are welcome — o
 If Orbit saved you a few "email it to myself" moments, consider fueling the next build:
 
 <p align="left">
-  <a href="https://buymeachai.in/mananbharti"><img src="https://img.shields.io/badge/%F0%9F%8D%B5-Buy%20Me%20A%20Chai-FFDD00?style=for-the-badge" alt="Buy Me A Chai"></a>
+  <a href="https://buymeachai.in/mananbharti"><img src="https://raw.githubusercontent.com/mananbharti/mananbharti/main/assets/buymeachai.png" alt="buymeachai" height="50" /></a>
 </p>
 
 <br/>
