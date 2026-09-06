@@ -355,7 +355,7 @@ This is planned for v3 — switchable per-PC profiles from a single mobile app.
 ## Repository Activity
 
 <!-- Auto-generates once the repo has commit history -->
-![Activity](https://repobeats.axiom.co/api/embed/PLACEHOLDER_REPOBEATS_ID.svg "Repobeats analytics image")
+![Activity](https://repobeats.axiom.co/api/embed/cdf88d947c766756ac2375d514a41bf6442d4eb6.svg "Repobeats analytics image")
 
 <br/>
 
