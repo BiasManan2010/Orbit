@@ -1,8 +1,8 @@
 <p align="center">
   <br/>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-3F51B5.svg?style=for-the-badge&label=License&logoColor=000000&labelColor=ececec" alt="License: Apache 2.0"></a>
-  <a href="https://github.com/BiasManan2010/orbit/stargazers"><img src="https://img.shields.io/github/stars/BiasManan2010/orbit?style=for-the-badge&color=A78BFA&labelColor=ececec" alt="Stars"></a>
-  <a href="https://github.com/BiasManan2010/orbit/issues"><img src="https://img.shields.io/github/issues/BiasManan2010/orbit?style=for-the-badge&color=EC4899&labelColor=ececec" alt="Issues"></a>
+  <a href="https://github.com/mananbharti/orbit/stargazers"><img src="https://img.shields.io/github/stars/mananbharti/orbit?style=for-the-badge&color=A78BFA&labelColor=ececec" alt="Stars"></a>
+  <a href="https://github.com/mananbharti/orbit/issues"><img src="https://img.shields.io/github/issues/mananbharti/orbit?style=for-the-badge&color=EC4899&labelColor=ececec" alt="Issues"></a>
   <a href="https://buymeachai.in/mananbharti"><img src="https://img.shields.io/badge/Support-Buy%20Me%20A%20Chai-FFDD00?style=for-the-badge&logoColor=000000&labelColor=ececec" alt="Buy Me A Chai"></a>
   <a href="#"><img src="https://img.shields.io/badge/Discord-Coming%20Soon-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=ececec" alt="Discord"></a>
   <br/>
@@ -25,7 +25,7 @@
 
 <br/>
 
-<a href="https://github.com/BiasManan2010/orbit">
+<a href="https://github.com/mananbharti/orbit">
   <!-- 🖼️ BOILERPLATE: Product screenshot — mobile app + desktop tray, side by side -->
   <img src="design/orbit-screenshots.png" title="Orbit screenshots">
 </a>
@@ -288,7 +288,7 @@ Found a security issue? Please open a private report rather than a public issue 
 
 ```bash
 # Clone the repo
-git clone https://github.com/BiasManan2010/orbit.git
+git clone https://github.com/mananbharti/orbit.git
 cd orbit
 
 # Desktop service
@@ -361,8 +361,8 @@ This is planned for v3 — switchable per-PC profiles from a single mobile app.
 
 ## Star History
 
-<a href="https://star-history.com/#BiasManan2010/orbit&Date">
-  <img src="https://api.star-history.com/svg?repos=BiasManan2010/orbit&type=Date&cachebust=1" alt="Star History Chart" width="80%"/>
+<a href="https://star-history.com/#mananbharti/orbit&Date">
+  <img src="https://api.star-history.com/svg?repos=mananbharti/orbit&type=Date&cachebust=1" alt="Star History Chart" width="80%"/>
 </a>
 
 <br/>
@@ -402,5 +402,5 @@ Orbit is licensed under the [Apache License 2.0](./LICENSE).
 <br/>
 
 <p align="center">
-  <sub>Built by <a href="https://github.com/BiasManan2010">Manan Bharti</a></sub>
+  <sub>Built by <a href="https://github.com/mananbharti">Manan Bharti</a></sub>
 </p>
