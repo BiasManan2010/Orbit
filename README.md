@@ -4,7 +4,7 @@
   <a href="https://github.com/mananbharti/orbit/stargazers"><img src="https://img.shields.io/github/stars/mananbharti/orbit?style=for-the-badge&color=A78BFA&labelColor=ececec" alt="Stars"></a>
   <a href="https://github.com/mananbharti/orbit/issues"><img src="https://img.shields.io/github/issues/mananbharti/orbit?style=for-the-badge&color=EC4899&labelColor=ececec" alt="Issues"></a>
   <a href="https://buymeachai.in/mananbharti"><img src="https://img.shields.io/badge/buymeachai-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black" alt="buymeachai"></a>
-  <a href="#"><img src="https://img.shields.io/badge/Discord-Coming%20Soon-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=ececec" alt="Discord"></a>
+  <a href="https://discord.gg/xQ3VaAnmPA"><img src="https://img.shields.io/badge/Discord-Join%20Us-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=ececec" alt="Discord"></a>
   <br/>
   <br/>
   <img src="https://img.shields.io/badge/React%20Native-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React Native">
