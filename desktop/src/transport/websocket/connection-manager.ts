@@ -4,8 +4,8 @@ import type { ActivityLog } from '../../activity-log/activity-log.js';
 import type { CommandRouter } from '../../command-router/command-router.js';
 import { HEARTBEAT_INTERVAL_MS, MAX_BUFFERED_BYTES } from '../../config.js';
 import { ProtocolError } from '../../protocol/errors.js';
-import { failure, success, type EventMessage, type JsonValue, type ResponseMessage } from '../../protocol/messages.js';
-import { COMMAND_PATTERN, isRecord, parseMessage } from '../../protocol/validation.js';
+import { failure, type EventMessage, type JsonValue, type ResponseMessage } from '../../protocol/messages.js';
+import { COMMAND_PATTERN, parseMessage } from '../../protocol/validation.js';
 import type { Session, SessionAuth } from '../../security-pairing/session-auth.js';
 
 const CLOSE_GRACE_MS = 1_000;
@@ -89,19 +89,7 @@ export class ConnectionManager {
       return;
     }
     if (message.type === 'session.refresh') {
-      const payload = message.payload;
-      const token = isRecord(payload) && Object.keys(payload).length === 1
-        && typeof payload.sessionToken === 'string' ? payload.sessionToken : '';
-      const session = this.auth.authenticate(token);
-      if (!session || session.deviceId !== connection.session.deviceId) {
-        this.send(socket, connection, failure(message.requestId, 'UNAUTHENTICATED'));
-        return;
-      }
-      connection.token = token;
-      connection.session = session;
-      this.scheduleExpiry(socket, connection);
-      this.record(connection, 'session.refreshed', 'success');
-      this.send(socket, connection, success(message.requestId, { expiresAt: session.expiresAt }));
+      this.send(socket, connection, failure(message.requestId, 'UNKNOWN_COMMAND'));
       return;
     }
     connection.busy = true;

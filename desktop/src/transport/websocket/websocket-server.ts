@@ -10,6 +10,7 @@ import { isLocalAddress, MAX_CONNECTIONS, MAX_MESSAGE_BYTES } from '../../config
 import { PROTOCOL_VERSION, type JsonValue } from '../../protocol/messages.js';
 import type { SessionAuth } from '../../security-pairing/session-auth.js';
 import { ConnectionManager } from './connection-manager.js';
+import type { PairingService } from '../../security-pairing/pairing-service.js';
 
 export interface TransportOptions {
   tls: ServerOptions;
@@ -19,6 +20,7 @@ export interface TransportOptions {
   auth: SessionAuth;
   log: ActivityLog;
   heartbeatMs?: number;
+  pairing?: PairingService;
 }
 
 function bearer(request: IncomingMessage): string {
@@ -60,13 +62,24 @@ export function createWebSocketTransport(options: TransportOptions) {
       response.writeHead(403).end(JSON.stringify({ version: PROTOCOL_VERSION, error: 'REJECTED' }));
       return;
     }
-    if (request.method !== 'POST' || request.url !== '/v1/session') {
+    if (request.method !== 'POST' || !['/v1/session', '/v1/pair'].includes(request.url ?? '')) {
       response.writeHead(404).end(JSON.stringify({ version: PROTOCOL_VERSION, error: 'NOT_FOUND' }));
       return;
     }
     if (request.headers['transfer-encoding'] || (request.headers['content-length'] ?? '0') !== '0') {
       response.setHeader('Connection', 'close');
       response.writeHead(400).end(JSON.stringify({ version: PROTOCOL_VERSION, error: 'INVALID_REQUEST' }));
+      return;
+    }
+    if (request.url === '/v1/pair') {
+      try {
+        const paired = options.pairing?.redeem(bearer(request));
+        response.writeHead(paired ? 200 : 401).end(JSON.stringify(paired
+          ?? { version: PROTOCOL_VERSION, error: 'PAIRING_REJECTED' }));
+      } catch {
+        options.log.record({ severity: 'error', eventType: 'pairing.rejected', outcome: 'failed' });
+        response.writeHead(503).end(JSON.stringify({ version: PROTOCOL_VERSION, error: 'PAIRING_UNAVAILABLE' }));
+      }
       return;
     }
     const issued = options.auth.issue(bearer(request));

@@ -1,14 +1,25 @@
-/** Reserves the approved QR contract; depends on protocol version; does not enroll devices or generate QR codes. */
-import type { PROTOCOL_VERSION } from './messages.js';
+/** Validates QR and pairing response contracts; depends on Zod; does not establish trust or enroll devices. */
+import { z } from 'zod';
+import { isLocalAddress } from '../config.js';
+import { IDENTIFIER_PATTERN } from './validation.js';
 
-export interface PairingPayload {
-  version: typeof PROTOCOL_VERSION;
-  desktopServiceId: string;
-  displayName: string;
-  endpoint: string;
-  /** SHA-256 of the DER certificate, lowercase hex; verify before sending any credential. */
-  certificateFingerprint: string;
-  pairingToken: string;
-  /** Unix time in milliseconds. */
-  expiresAt: number;
-}
+export const tokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+export const idSchema = z.string().regex(IDENTIFIER_PATTERN);
+export const endpointSchema = z.string().max(256).refine(value => {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'wss:' && isLocalAddress(url.hostname.replace(/^\[|\]$/g, ''))
+      && !url.username && !url.password && !url.search && !url.hash && url.pathname === '/v1/channel';
+  } catch { return false; }
+});
+export const pairingPayloadSchema = z.strictObject({
+  version: z.literal(1), desktopServiceId: idSchema, displayName: z.string().min(1).max(64),
+  endpoint: endpointSchema, certificateFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  pairingToken: tokenSchema, expiresAt: z.number().int().positive(),
+});
+export type PairingPayload = z.infer<typeof pairingPayloadSchema>;
+
+export const pairedResponseSchema = z.strictObject({ version: z.literal(1),
+  desktopServiceId: idSchema, deviceId: idSchema, credential: tokenSchema });
+export const sessionResponseSchema = z.strictObject({ version: z.literal(1),
+  deviceId: idSchema, sessionId: idSchema, expiresAt: z.number().int().positive(), sessionToken: tokenSchema });

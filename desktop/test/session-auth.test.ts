@@ -46,10 +46,10 @@ test('durable credential hashes survive service reconstruction, session tokens d
   assert.throws(() => new FilePairedCredentialStore(path));
 });
 
-test('configuration requires TLS and rejects wildcard/public bind addresses', () => {
-  assert.throws(() => readConfig({}));
+test('configuration rejects legacy TLS overrides and wildcard/public bind addresses', () => {
+  assert.throws(() => readConfig({ ORBIT_TLS_CERT: 'cert' }));
   for (const host of ['0.0.0.0', '::', '8.8.8.8', 'example.com']) {
-    assert.throws(() => readConfig({ ORBIT_HOST: host, ORBIT_TLS_CERT: 'cert', ORBIT_TLS_KEY: 'key' }));
+    assert.throws(() => readConfig({ ORBIT_HOST: host }));
   }
-  assert.equal(readConfig({ ORBIT_TLS_CERT: 'cert', ORBIT_TLS_KEY: 'key' }).host, '127.0.0.1');
+  assert.equal(readConfig({}).host, '127.0.0.1');
 });

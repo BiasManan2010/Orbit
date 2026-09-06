@@ -12,7 +12,7 @@ import type { ResponseMessage } from '../src/protocol/messages.js';
 import { createWebSocketTransport } from '../src/transport/websocket/websocket-server.js';
 import { core, testIdentity } from './helpers.js';
 
-const identity = testIdentity();
+const identity = await testIdentity();
 after(() => identity.cleanup());
 
 function pinnedTls(fingerprint = identity.channel.certificateFingerprint) {
@@ -174,7 +174,7 @@ test('expired sessions close open sockets and cannot reconnect', { timeout: 10_0
   assert.match(String(error), /401/);
 });
 
-test('session renewal rebinds the same socket without another QR scan', { timeout: 10_000 }, async t => {
+test('session renewal authenticates a replacement socket without another QR scan', { timeout: 10_000 }, async t => {
   const context = await fixture(t, { ttlMs: 1_000 });
   const first = await context.exchange();
   const socket = context.connect(String(first.body.sessionToken));
@@ -182,20 +182,22 @@ test('session renewal rebinds the same socket without another QR scan', { timeou
   await delay(550);
   const second = await context.exchange();
   assert.notEqual(second.body.sessionToken, first.body.sessionToken);
-  assert.equal((await send(socket, 'session.refresh', { sessionToken: second.body.sessionToken })).payload.ok, true);
+  socket.terminate();
+  const replacement = context.connect(String(second.body.sessionToken));
+  await once(replacement, 'open');
   await delay(500);
   assert.equal(context.auth.authenticate(String(first.body.sessionToken)), undefined);
-  assert.equal((await send(socket)).payload.ok, true);
+  assert.equal((await send(replacement)).payload.ok, true);
 });
 
-test('session renewal cannot change the authenticated device identity', { timeout: 10_000 }, async t => {
+test('payload session tokens cannot change the authenticated device identity', { timeout: 10_000 }, async t => {
   const context = await fixture(t);
   const first = await context.exchange();
   const second = await context.exchange(context.addDevice().credential);
   const socket = context.connect(String(first.body.sessionToken));
   await once(socket, 'open');
   assert.deepEqual((await send(socket, 'session.refresh', { sessionToken: second.body.sessionToken })).payload,
-    { ok: false, error: { code: 'UNAUTHENTICATED' } });
+    { ok: false, error: { code: 'UNKNOWN_COMMAND' } });
   assert.equal((await send(socket)).payload.ok, true);
 });
 

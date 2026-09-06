@@ -1,7 +1,6 @@
-/** Supplies isolated test identities and handlers; depends on Node/OpenSSL and core modules; never provisions production devices. */
+/** Supplies isolated test identities and handlers; depends on selfsigned and core modules; never provisions production devices. */
 import { randomBytes, randomUUID } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ActivityLog } from '../src/activity-log/activity-log.js';
@@ -10,6 +9,7 @@ import { CommandRouter } from '../src/command-router/command-router.js';
 import type { BiometricConfirmation } from '../src/security-pairing/biometric-confirmation.js';
 import { SessionAuth } from '../src/security-pairing/session-auth.js';
 import { loadEncryptedChannel } from '../src/transport/websocket/encrypted-channel.js';
+import { generate } from 'selfsigned';
 
 export function core(options: { ttlMs?: number; now?: () => number; biometric?: BiometricConfirmation } = {}) {
   const deviceId = randomUUID();
@@ -29,16 +29,15 @@ export function core(options: { ttlMs?: number; now?: () => number; biometric?: 
   return { deviceId, credential, log, auth, registry, router, addDevice, revoke: () => { active = false; } };
 }
 
-export function testIdentity() {
+export async function testIdentity() {
   const directory = mkdtempSync(join(tmpdir(), 'orbit-transport-test-'));
   const certificatePath = join(directory, 'certificate.pem');
   const privateKeyPath = join(directory, 'private-key.pem');
-  const gitOpenSsl = 'C:\\Program Files\\Git\\usr\\bin\\openssl.exe';
-  const openssl = process.env.ORBIT_TEST_OPENSSL ?? (process.platform === 'win32' && existsSync(gitOpenSsl) ? gitOpenSsl : 'openssl');
   try {
-    execFileSync(openssl, ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
-      '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1',
-      '-keyout', privateKeyPath, '-out', certificatePath], { stdio: 'pipe', windowsHide: true });
+    const generated = await generate([{ name: 'commonName', value: 'localhost' }], { keyType: 'ec', algorithm: 'sha256',
+      extensions: [{ name: 'subjectAltName', altNames: [{ type: 2, value: 'localhost' }, { type: 7, ip: '127.0.0.1' }] }] });
+    writeFileSync(certificatePath, generated.cert, { mode: 0o600 });
+    writeFileSync(privateKeyPath, generated.private, { mode: 0o600 });
     return { directory, certificatePath, privateKeyPath,
       channel: loadEncryptedChannel(certificatePath, privateKeyPath),
       cleanup: () => rmSync(directory, { recursive: true, force: true }) };

@@ -169,7 +169,7 @@ flowchart TB
         direction LR
         MDNS["mDNS / Bonjour<br/>Local Auto-Discovery"]
         WS["WebSocket<br/>Encrypted Command Channel"]
-        Push["APNs / FCM<br/>Background Wake Push"]
+        Push["APNs / FCM<br/>Deferred beyond v1"]
     end
  
     subgraph ServiceCore["🖥️ ORBIT DESKTOP SERVICE (Node.js + TypeScript)"]
@@ -268,7 +268,7 @@ Orbit is made up of two components talking over one encrypted, low-latency chann
  
 - **Orbit Mobile** — React Native app (iOS/Android). Sends commands, receives clipboard/file events.
 - **Orbit Desktop** — Node.js background service (Windows/Linux). Simulates input, handles file transfer, executes commands.
-Discovery is handled via mDNS/Bonjour on the local network, with QR-code pairing for first connection and a push-notification channel (APNs/FCM) to wake the mobile connection for background events.
+Discovery is handled via mDNS/Bonjour on the local network. QR-code pairing creates a durable device credential; short-lived session tokens renew automatically without rescanning. Background wake via APNs/FCM is deferred entirely for v1 — no third-party push infrastructure is used.
  
 <br/>
 ## Security & Privacy
@@ -276,7 +276,7 @@ Discovery is handled via mDNS/Bonjour on the local network, with QR-code pairing
 - **Local-first by design** — v1 operates entirely over your local network. No file, clipboard, or command data is routed through a third-party cloud server.
 - **Encrypted channel** — all communication between mobile and desktop is encrypted end-to-end; no cleartext transfer of clipboard content or files.
 - **No persistent data collection** — Orbit does not log, store, or transmit your file contents or clipboard history to any external service.
-- **Explicit pairing required** — every connection starts with a QR code + short-lived token; no device connects without you approving it first.
+- **Explicit pairing required** — a locally requested QR code contains a one-time pairing token and pins the desktop certificate fingerprint. Pairing creates a durable device credential; subsequent connections use automatically renewed, short-lived session tokens without rescanning. No device connects without you approving it first.
 - **Per-device permissions** *(v2)* — scope what each paired device can do (e.g., mouse/keyboard only, no file access).
 - **Panic lock** *(v2)* — instantly lock your PC and revoke all paired-device sessions with one tap.
 

@@ -1,35 +1,58 @@
-/** Composes Orbit Desktop; depends on core modules and explicit local configuration; does not implement feature handlers. */
-import { ActivityLog } from './activity-log/activity-log.js';
-import { CommandRegistry } from './command-router/command-registry.js';
-import { CommandRouter } from './command-router/command-router.js';
+/** Runs Orbit Desktop and explicit local pairing controls; depends on the service and QR renderer; never prints credentials or runs features. */
+import { createInterface } from 'node:readline';
 import { readConfig } from './config.js';
-import { FilePairedCredentialStore } from './security-pairing/paired-credential-store.js';
-import { SessionAuth } from './security-pairing/session-auth.js';
-import { loadEncryptedChannel } from './transport/websocket/encrypted-channel.js';
-import { createWebSocketTransport } from './transport/websocket/websocket-server.js';
+import { startDesktop } from './desktop-service.js';
+import { showPairing } from './security-pairing/pairing-display.js';
 
 async function main(): Promise<void> {
-  const config = readConfig();
-  const log = new ActivityLog();
-  const credentials = new FilePairedCredentialStore(config.credentialStorePath);
-  const auth = new SessionAuth(credentials, log);
-  const router = new CommandRouter(new CommandRegistry(), auth, log);
-  const channel = loadEncryptedChannel(config.certificatePath, config.privateKeyPath);
-  const transport = createWebSocketTransport({ ...config, tls: channel.tls, router, auth, log });
-  try { await transport.start(); }
-  catch (error) { await transport.stop(); throw error; }
-  console.info('Orbit Desktop is listening on its configured encrypted local endpoint.');
+  const service = await startDesktop(readConfig());
+  const input = createInterface({ input: process.stdin });
+  let cleanup: (() => void) | undefined;
+  let expiry: NodeJS.Timeout | undefined;
+  let opening = false;
   let stopping = false;
-  const stop = () => {
+  const removeInvitation = () => {
+    try { cleanup?.(); }
+    catch { service.log.record({ severity: 'warn', eventType: 'pairing.rejected', outcome: 'failed' }); }
+  };
+  const open = async () => {
+    if (opening || stopping) return;
+    opening = true;
+    try {
+      clearTimeout(expiry);
+      removeInvitation();
+      const payload = service.pairing.open();
+      cleanup = await showPairing(service.directory, payload);
+      if (stopping) { removeInvitation(); return; }
+      expiry = setTimeout(() => { service.pairing.close(); removeInvitation(); }, Math.max(1, payload.expiresAt - Date.now()));
+      console.info('Pairing is open for two minutes. Open pairing.svg in the private data directory; pairing.json is for the integration client.');
+    } catch {
+      service.pairing.close();
+      console.error('Could not display the pairing invitation. Check the private data directory.');
+    } finally { opening = false; }
+  };
+  const stop = async () => {
     if (stopping) return;
     stopping = true;
-    void transport.stop().catch(() => { process.exitCode = 1; });
+    clearTimeout(expiry);
+    removeInvitation();
+    input.close();
+    // Closing readline alone leaves a piped stdin handle alive in a background service.
+    process.stdin.destroy();
+    await service.stop();
   };
-  process.once('SIGINT', stop);
-  process.once('SIGTERM', stop);
+  const stopSafely = () => { void stop().catch(() => { process.exitCode = 1; }); };
+  input.on('line', line => {
+    if (line.trim() === 'pair') void open();
+    if (line.trim() === 'quit') stopSafely();
+  });
+  process.once('SIGINT', stopSafely);
+  process.once('SIGTERM', stopSafely);
+  console.info('Orbit Desktop is listening. Enter pair to open pairing, or quit to stop.');
+  if (process.argv.includes('--pair')) await open();
 }
 
 void main().catch(() => {
-  console.error('Orbit Desktop could not start. Check the local endpoint, TLS identity, and credential-store configuration.');
+  console.error('Orbit Desktop could not start. Check the local endpoint, private data directory, identity, and service lock.');
   process.exitCode = 1;
 });
